@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Thanh toán</title>
+</head>
+<body>
+  <h1>Thanh toán đơn hàng</h1>
+  <img id="qrCode" src="" alt="QR Code" style="display: none;">
+  <p id="loading">Đang tải QR...</p>
+  <button onclick="confirmPayment()">Xác nhận thanh toán</button>
+  <p id="status"></p>
+
+  <script>
+    const orderId = 'donhang543';
+    const price = 5000; // Giá tiền động
+    const apiBaseUrl = 'https://apicuale.share.zrok.io';
+
+    // Lấy mã QR
+    console.log(`Bắt đầu lấy QR cho đơn hàng: ${orderId} với giá: ${price}`);
+    fetch(`${apiBaseUrl}/generate-qr/${orderId}?Price=${price}`)
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        const qrCode = document.getElementById('qrCode');
+        qrCode.src = data.qrCode;
+        qrCode.style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('status').innerText = 'QR tải thành công';
+      })
+      .catch(err => {
+        console.error('Lỗi khi lấy QR:', err);
+        document.getElementById('status').innerText = `Lỗi khi tải QR: ${err.message}`;
+        document.getElementById('loading').style.display = 'none';
+      });
+
+    // Xác nhận thanh toán
+    function confirmPayment() {
+      console.log(`Bắt đầu xác nhận thanh toán cho đơn hàng: ${orderId}`);
+      document.getElementById('status').innerText = 'Đang xác nhận...';
+      fetch(`${apiBaseUrl}/confirm-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, price }) // Gửi cả price
+      })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log('Kết quả xác nhận:', data);
+        document.getElementById('status').innerText = data.message;
+      })
+      .catch(err => {
+        console.error('Lỗi khi xác nhận:', err);
+        document.getElementById('status').innerText = `Lỗi: ${err.message}`;
+      });
+    }
+  </script>
+</body>
+</html>
